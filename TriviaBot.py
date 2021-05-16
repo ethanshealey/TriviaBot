@@ -31,7 +31,7 @@ async def on_message(msg):
 
         elif len(content) == 1 and content[0] == '?triv':
             # get data
-            url = 'https://opentdb.com/api.php?amount=1&type=multiple'
+            url = 'https://opentdb.com/api.php?amount=1'
             data = json.loads(urlopen(url).read().decode("utf-8"))
 
             #parse data
@@ -39,23 +39,34 @@ async def on_message(msg):
             cat = html.unescape(data['category'])
             question = html.unescape(data['question'])
             diff = html.unescape(data['difficulty'])
+            type = html.unescape(data['type'])
             correct_ans = html.unescape(data['correct_answer'])
-            possible_ans = [html.unescape(d) for d in data['incorrect_answers']]
-            possible_ans.append(correct_ans)
-
+            if not type == 'boolean':
+                possible_ans = [html.unescape(d) for d in data['incorrect_answers']]
+                possible_ans.append(correct_ans)
+            else:
+                possible_ans = ['True', 'False']
+            
             # shuffle ans
-            random.shuffle(possible_ans)
+            if not type == 'boolean':
+                random.shuffle(possible_ans)
 
             # create embed
             embed = discord.Embed(title="Welcome to Trivia!", color=0x1FB3FC)
             embed.add_field(name='Category', value=cat, inline=False)
             embed.add_field(name='Difficulty', value=diff, inline=False)
-            embed.add_field(name='Question', value=question + f'\n\nA) {possible_ans[0]}\nB) {possible_ans[1]}\nC) {possible_ans[2]}\nD) {possible_ans[3]}', inline=False)
-
-
+            if not type == 'boolean':
+                embed.add_field(name='Question', value=question + f'\n\nA) {possible_ans[0]}\nB) {possible_ans[1]}\nC) {possible_ans[2]}\nD) {possible_ans[3]}', inline=False)
+            else: 
+                embed.add_field(name='Question', value=question + f'\n\nTrue or False?', inline=False)
             # send embeded message
             m = await msg.channel.send(embed=embed)
-            emotes = {'🇦': possible_ans[0], '🇧': possible_ans[1], '🇨': possible_ans[2], '🇩': possible_ans[3]}
+
+            if not type == 'boolean':
+                emotes = {'🇦': possible_ans[0], '🇧': possible_ans[1], '🇨': possible_ans[2], '🇩': possible_ans[3]}
+            else:
+                emotes = {'🇹': possible_ans[0], '🇫':possible_ans[1]}
+
             for emote in emotes:
                 await m.add_reaction(emote)
 
@@ -64,20 +75,31 @@ async def on_message(msg):
             while not hasAnswered:
                 await asyncio.sleep(1)
                 m = await msg.channel.fetch_message(m.id)
-                A = get(m.reactions, emoji=list(emotes)[0])
-                B = get(m.reactions, emoji=list(emotes)[1])
-                C = get(m.reactions, emoji=list(emotes)[2])
-                D = get(m.reactions, emoji=list(emotes)[3])
 
-                # find which answer the user gave
-                if A and A.count > 1:
-                    hasAnswered, ans = True, 0
-                elif B and B.count > 1:
-                    hasAnswered, ans = True, 1
-                elif C and C.count > 1:
-                    hasAnswered, ans = True, 2
-                elif D and D.count > 1:
-                    hasAnswered, ans = True, 3
+                if not type == 'boolean':
+                    A = get(m.reactions, emoji=list(emotes)[0])
+                    B = get(m.reactions, emoji=list(emotes)[1])
+                    C = get(m.reactions, emoji=list(emotes)[2])
+                    D = get(m.reactions, emoji=list(emotes)[3])
+
+                    # find which answer the user gave
+                    if A and A.count > 1:
+                        hasAnswered, ans = True, 0
+                    elif B and B.count > 1:
+                        hasAnswered, ans = True, 1
+                    elif C and C.count > 1:
+                        hasAnswered, ans = True, 2
+                    elif D and D.count > 1:
+                        hasAnswered, ans = True, 3
+
+                else:
+                    T = get(m.reactions, emoji=list(emotes)[0])
+                    F = get(m.reactions, emoji=list(emotes)[1])
+
+                    if T and T.count > 1:
+                        hasAnswered, ans = True, 0
+                    elif F and F.count > 1:
+                        hasAnswered, ans = True, 1
 
             # respond
             if possible_ans[ans] == correct_ans:
@@ -85,6 +107,8 @@ async def on_message(msg):
             else:
                 embed = discord.Embed(title="Incorrect!", description=f"Sorry! The correct answer was {correct_ans}", color=0xFC1F4E)       
             await msg.channel.send(embed=embed)
+
+            print(correct_ans, possible_ans[ans])
 
         '''
         elif len(content) == 2 and content[0] == '?triv' and content[1] == 'adv':
