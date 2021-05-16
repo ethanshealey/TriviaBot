@@ -86,10 +86,12 @@ async def on_message(msg):
                 embed = discord.Embed(title="Incorrect!", description=f"Sorry! The correct answer was {correct_ans}", color=0xFC1F4E)       
             await msg.channel.send(embed=embed)
 
+        '''
         elif len(content) == 2 and content[0] == '?triv' and content[1] == 'adv':
             await msg.channel.send('Here is the prompt for an advanced question!')
 
         elif len(content) == 4 and content[0] == '?triv' and content[1] == 'adv':
             await msg.channel.send('Here is an advanced question!')
+        '''
     
 client.run(TOKEN)
