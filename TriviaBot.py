@@ -40,7 +40,7 @@ async def on_message(msg):
             question = html.unescape(data['question'])
             diff = html.unescape(data['difficulty'])
             correct_ans = html.unescape(data['correct_answer'])
-            possible_ans = html.unescape(data['incorrect_answers'])
+            possible_ans = [html.unescape(d) for d in data['incorrect_answers']]
             possible_ans.append(correct_ans)
 
             # shuffle ans
