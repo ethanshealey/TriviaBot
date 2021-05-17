@@ -47,7 +47,7 @@ async def on_message(msg):
                 subject_str += str(x+1) + ') ' + list(subjects)[x] + '\n'
             embed.add_field(name='Subjects', value=subject_str)
             embed.add_field(name='Difficulties', value='• Easy\n• Medium\n• Hard')
-            embed.set_footer(text='Create by Ethan Shealey | https://github.com/ethanshealey/TriviaBot')
+            embed.set_footer(text='Create by Ethan Shealey | https://github.com/ethanshealey/TriviaBot\nQuestions from opentdb.com | https://opentdb.com')
             await msg.channel.send(embed=embed)
 
         elif len(content) <= 2 and (content[0] == '?stats' or content[0] == '?stat'):
