@@ -1,3 +1,10 @@
+# Created by Ethan Shealey
+# Last updated: 5/17/2021
+# 
+# TriviaBot! alllows you and your friends to play trivia in your chat!
+#
+# Run with `python3 TriviaBot.py`
+
 import asyncio, html, json, os, random, discord, requests, sqlite3, sys
 from sqlite3 import Error
 from urllib.request import urlopen
@@ -10,6 +17,52 @@ con = sqlite3.connect('player_stats.db')
 cursorObj = con.cursor()
 client = discord.Client()
 
+async def get_user(m):
+    users = []
+
+    for react in m.reactions:
+        async for u in react.users():
+            if u.id != 843268722658377758:
+                users.append(u)
+    if len(users) > 0:
+        username = users[0].name
+        user = await client.fetch_user(users[0].id)
+    else:
+        user = msg.author
+    
+    return user, username
+
+def get_subjects_and_codes():
+    subjects = ['Animals', 'Art', 'Celebrities', 'Entertainment', 'Entertainment: Board Games', 'Entertainment: Books', 'Entertainment: Cartoon & Animations', 'Entertainment: Comics', 'Entertainment: Film', 'Entertainment: Japanese Anime & Manga', 'Entertainment: Music', 'Entertainment: Musicals & Theatres', 'Entertainment: Television', 'Entertainment: Video Games', 'General Knowledge', 'Geography', 'History', 'Mythology', 'Politics', 'Science', 'Science & Nature', 'Science: Computers', 'Science: Gadgets', 'Science: Mathematics', 'Sports', 'Vehicles']
+    entertainment_list = ['5', '6', '7', '8', '9', '10', '11', '12', '13', '14']
+    science_list = ['21', '22', '23', '24']
+    subject_codes = {'1': 27, '2': 25, '3': 26, '5': 16, '6': 10, '7': 32, '8': 29, '9': 11, '10': 31, '11': 12, '12': 13, '13': 14, '14': 15, '15': 9, '16': 22, '17': 23, '18': 20, '19': 24, '21': 17, '22': 18, '23': 30, '24': 19, '25': 21, '26': 28}
+    subject_codes['4'] = subject_codes[entertainment_list[random.randint(0, len(entertainment_list)-1)]]
+    subject_codes['20'] = subject_codes[science_list[random.randint(0, len(science_list)-1)]]
+
+    return subjects, science_list, subject_codes
+
+def get_url(content, subject_codes):
+    url = 'https://opentdb.com/api.php?amount=1'
+    if len(content) == 2:
+        if content[1].isdigit():
+            url += '&category=' + str(subject_codes[content[1]])
+        if content[1].lower() == 'easy' or content[1].lower() == 'medium' or content[1].lower() == 'hard':
+            url += '&difficulty=' + content[1].lower()
+
+    elif len(content) == 3:
+        if content[1].isdigit():
+            url += '&category=' + str(subject_codes[content[1]])
+        elif content[2].isdigit():
+            url += '&category=' + str(subject_codes[content[2]])
+
+        if content[1].lower() == 'easy' or content[1].lower() == 'medium' or content[1].lower() == 'hard':
+            url += '&difficulty=' + content[1]
+        elif content[2].lower() == 'easy' or content[2].lower() == 'medium' or content[2].lower() == 'hard':
+            url += '&difficulty=' + content[2]
+
+    return url
+
 def add_if_new_user(user):
     query = ("SELECT * FROM stats WHERE username=?")
     data = [i for i in cursorObj.execute(query, (str(user),))]
@@ -19,6 +72,20 @@ def add_if_new_user(user):
         cursorObj.execute(query, (str(user),))
         con.commit()
         print('added user', user, 'to db')
+    else:
+        print('user', user, 'is requesting a question')
+
+def update_score(user, correct):
+    if correct:
+        query = ("UPDATE stats SET correct = correct + 1 WHERE username=?")
+    else:
+        query = ("UPDATE stats SET incorrect = incorrect + 1 WHERE username=?")
+    cursorObj.execute(query, (str(user),))
+    con.commit()
+
+@client.event
+async def on_ready():
+    await client.change_presence(activity=discord.Game(name='?help'))
 
 @client.event
 async def on_message(msg):
@@ -29,12 +96,7 @@ async def on_message(msg):
     if content.startswith('?'):
         content = content.split(' ')
 
-        subjects = ['Animals', 'Art', 'Celebrities', 'Entertainment', 'Entertainment: Board Games', 'Entertainment: Books', 'Entertainment: Cartoon & Animations', 'Entertainment: Comics', 'Entertainment: Film', 'Entertainment: Japanese Anime & Manga', 'Entertainment: Music', 'Entertainment: Musicals & Theatres', 'Entertainment: Television', 'Entertainment: Video Games', 'General Knowledge', 'Geography', 'History', 'Mythology', 'Politics', 'Science', 'Science & Nature', 'Science: Computers', 'Science: Gadgets', 'Science: Mathematics', 'Sports', 'Vehicles']
-        entertainment_list = ['5', '6', '7', '8', '9', '10', '11', '12', '13', '14']
-        science_list = ['21', '22', '23', '24']
-        subject_codes = {'1': 27, '2': 25, '3': 26, '5': 16, '6': 10, '7': 32, '8': 29, '9': 11, '10': 31, '11': 12, '12': 13, '13': 14, '14': 15, '15': 9, '16': 22, '17': 23, '18': 20, '19': 24, '21': 17, '22': 18, '23': 30, '24': 19, '25': 21, '26': 28}
-        subject_codes['4'] = subject_codes[entertainment_list[random.randint(0, len(entertainment_list)-1)]]
-        subject_codes['20'] = subject_codes[science_list[random.randint(0, len(science_list)-1)]]
+        subjects, science_list, subject_codes = get_subjects_and_codes()
 
         if len(content) == 1 and content[0] == '?help':
             # help prompt
@@ -69,25 +131,7 @@ async def on_message(msg):
 
         elif len(content) >= 1 and content[0] == '?triv':
             # get data                    
-            url = 'https://opentdb.com/api.php?amount=1' #+ (('&category=' + str(int(content[1])+8)) if len(content) > 1 else '')
-            
-            if len(content) == 2:
-                if content[1].isdigit():
-                    url += '&category=' + str(subject_codes[content[1]])
-                if content[1].lower() == 'easy' or content[1].lower() == 'medium' or content[1].lower() == 'hard':
-                    url += '&difficulty=' + content[1].lower()
-
-            elif len(content) == 3:
-                if content[1].isdigit():
-                    url += '&category=' + str(subject_codes[content[1]])
-                elif content[2].isdigit():
-                    url += '&category=' + str(subject_codes[content[2]])
-
-                if content[1].lower() == 'easy' or content[1].lower() == 'medium' or content[1].lower() == 'hard':
-                    url += '&difficulty=' + content[1]
-                elif content[2].lower() == 'easy' or content[2].lower() == 'medium' or content[2].lower() == 'hard':
-                    url += '&difficulty=' + content[2]
-
+            url = get_url(content, subject_codes)
             data = json.loads(urlopen(url).read().decode("utf-8"))
 
             #parse data
@@ -162,36 +206,20 @@ async def on_message(msg):
                 await asyncio.sleep(1)
                 time += 1
 
-            users = []
-
-            for react in m.reactions:
-                async for u in react.users():
-                    if u.id != 843268722658377758:
-                        users.append(u)
-            if len(users) > 0:
-                username = users[0].name
-                user = await client.fetch_user(users[0].id)
-            else:
-                user = msg.author
+            user, username = await get_user(m)
 
             # respond
             if not hasAnswered and time >= 30:
                 add_if_new_user(user)
-                query = ("UPDATE stats SET incorrect = incorrect + 1 WHERE username=?")
-                cursorObj.execute(query, (str(user),))
-                con.commit()
+                update_score(user, 0)
                 embed = discord.Embed(title="⏰ Out of time!", description=f"Sorry! The correct answer was {correct_ans}", color=0xFC1F4E)
             elif possible_ans[ans] == correct_ans:
                 add_if_new_user(user)
-                query = ("UPDATE stats SET correct = correct + 1 WHERE username=?")
-                cursorObj.execute(query, (str(user),))
-                con.commit()
+                update_score(user, 1)
                 embed = discord.Embed(title="✅ Correct!", description=f"Good job {username}!", color=0x68FF38)
             else:
                 add_if_new_user(user)
-                query = ("UPDATE stats SET incorrect = incorrect + 1 WHERE username=?")
-                cursorObj.execute(query, (str(user),))
-                con.commit()
+                update_score(user, 0)
                 embed = discord.Embed(title="❌ Incorrect!", description=f"Sorry {username}! The correct answer was {correct_ans}", color=0xFC1F4E)       
             await msg.channel.send(embed=embed)
     
