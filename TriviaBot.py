@@ -26,7 +26,7 @@ async def on_message(msg):
         if len(content) == 1 and content[0] == '?help':
             # help prompt
             embed = discord.Embed(title='Help', color=0x1FB3FC)
-            embed.add_field(name='Welcome to TriviaBot!', value='How to use:\n• To play: type `?triv` in chat\n• OPTIONAL: You can also specify a subject ID by doing `?triv <subject id>`\n• OPTIONAL: You can also specify difficulty using one of the three keywords, i.e `?triv hard`\n• OPTIONAL: Finally, you can combine both these in any order, i.e `?triv 10 hard` or `?triv hard 10`\n• To respond: TriviaBot will automatically react with the possible options, click on the option you think is correct!\n\nSubject IDs:\n1) General Knowledge\n2) Entertainment: Books\n3) Entertainment: Film\n4) Entertainment: Music\n5) Entertainment: Musicals & Theatres\n6) Entertainment: Television\n7) Entertainment: Video Games\n8) Entertainment: Board Games\n9) Science & Nature\n10) Science: Computers\n11) Science: Mathematics\n12) Mythology\n13) Sports\n14) Geography\n15) History\n16) Politics\n17) Art\n18) Celebrities\n19) Animals\n20) Vehicles\n21) Entertainment: Comics\n22) Science: Gadgets\n23) Entertainment: Japanese Anime & Manga\n24) Entertainment: Cartoon & Animations\n\nDifficulties:\n• easy\n• medium\n• hard', inline=False)
+            embed.add_field(name='Welcome to TriviaBot!', value='How to use:\n• To play: type `?triv` in chat\n• OPTIONAL: You can also specify a subject ID by doing `?triv <subject id>`\n• OPTIONAL: You can also specify difficulty using one of the three keywords, i.e `?triv hard`\n• OPTIONAL: Finally, you can combine both these in any order, i.e `?triv 10 hard` or `?triv hard 10`\n• To respond: TriviaBot will automatically react with the possible options, click on the option you think is correct!\n\nSubject IDs:\n1) General Knowledge\n2) Entertainment: Books\n3) Entertainment: Film\n4) Entertainment: Music\n5) Entertainment: Musicals & Theatres\n6) Entertainment: Television\n7) Entertainment: Video Games\n8) Entertainment: Board Games\n9) Science & Nature\n10) Science: Computers\n11) Science: Mathematics\n12) Mythology\n13) Sports\n14) Geography\n15) History\n16) Politics\n17) Art\n18) Celebrities\n19) Animals\n20) Vehicles\n21) Entertainment: Comics\n22) Science: Gadgets\n23) Entertainment: Japanese Anime & Manga\n24) Entertainment: Cartoon & Animations\n\nDifficulties:\n• Easy\n• Medium\n• Hard', inline=False)
             await msg.channel.send(embed=embed)
 
         elif len(content) >= 1 and content[0] == '?triv':
@@ -77,6 +77,7 @@ async def on_message(msg):
                 embed.add_field(name='Question', value=question + f'\n\nA) {possible_ans[0]}\nB) {possible_ans[1]}\nC) {possible_ans[2]}\nD) {possible_ans[3]}', inline=False)
             else: 
                 embed.add_field(name='Question', value=question + f'\n\nTrue or False?', inline=False)
+            
             # send embeded message
             m = await msg.channel.send(embed=embed)
 
@@ -91,7 +92,7 @@ async def on_message(msg):
             # wait for a response
             hasAnswered, ans = False, None
             while not hasAnswered:
-                await asyncio.sleep(1)
+                
                 m = await msg.channel.fetch_message(m.id)
 
                 if not type == 'boolean':
@@ -119,11 +120,13 @@ async def on_message(msg):
                     elif F and F.count > 1:
                         hasAnswered, ans = True, 1
 
+                await asyncio.sleep(1)
+
             # respond
             if possible_ans[ans] == correct_ans:
-                embed = discord.Embed(title="Correct!", description="Good job!", color=0x68FF38)
+                embed = discord.Embed(title="✅ Correct!", description="Good job!", color=0x68FF38)
             else:
-                embed = discord.Embed(title="Incorrect!", description=f"Sorry! The correct answer was {correct_ans}", color=0xFC1F4E)       
+                embed = discord.Embed(title="❌ Incorrect!", description=f"Sorry! The correct answer was {correct_ans}", color=0xFC1F4E)       
             await msg.channel.send(embed=embed)
     
 client.run(TOKEN)
