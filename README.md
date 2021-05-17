@@ -13,9 +13,10 @@ next, create the database by running
     python3 create_database.py
 
 and finally, create a file called `.env` and place 
-
-   #.env
-   DISCORD_TOKEN=<TOKEN>
+```
+#.env
+DISCORD_TOKEN=<TOKEN>
+```
 
 then lauch the bot with
 
