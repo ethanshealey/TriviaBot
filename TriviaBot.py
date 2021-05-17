@@ -1,12 +1,24 @@
-import asyncio, html, json, os, random, discord, requests
+import asyncio, html, json, os, random, discord, requests, sqlite3, sys
+from sqlite3 import Error
 from urllib.request import urlopen
 from discord.utils import get
 from dotenv import load_dotenv
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
-
+con = sqlite3.connect('player_stats.db')
+cursorObj = con.cursor()
 client = discord.Client()
+
+def add_if_new_user(user):
+    query = ("SELECT * FROM stats WHERE username=?")
+    data = [i for i in cursorObj.execute(query, (str(user),))]
+    if data == []:
+        # insert new player into database
+        query = ("INSERT INTO stats (username) values (?)")
+        cursorObj.execute(query, (str(user),))
+        con.commit()
+        print('added user', user, 'to db')
 
 @client.event
 async def on_message(msg):
@@ -36,6 +48,23 @@ async def on_message(msg):
             embed.add_field(name='Subjects', value=subject_str)
             embed.add_field(name='Difficulties', value='• Easy\n• Medium\n• Hard')
             embed.set_footer(text='Create by Ethan Shealey | https://github.com/ethanshealey/TriviaBot')
+            await msg.channel.send(embed=embed)
+
+        elif len(content) <= 2 and (content[0] == '?stats' or content[0] == '?stat'):
+            if len(content) == 2:
+                user = msg.mentions[0]
+            else:
+                user = msg.author
+            query = ("SELECT * FROM stats WHERE username=?")
+            data = [i for i in cursorObj.execute(query, (str(user),))]
+            if len(data) >= 1:
+                data=data[0]
+                embed = discord.Embed(title='Stats for ' + str(data[1]), color=0x1FB3FC)
+                embed.add_field(name='Score', value='❓\'s answered: ' + str(data[2] + data[3]), inline=False)
+                embed.add_field(name='Accuracy', value='100%' if data[3] == 0 else str(round((data[2]/(data[2]+data[3])) * 100,2)) + '%', inline=False)
+            else:
+                embed = discord.Embed(title=str(user) + ' has not played', description='No stats for player', color=0x1FB3FC)
+
             await msg.channel.send(embed=embed)
 
         elif len(content) >= 1 and content[0] == '?triv':
@@ -147,9 +176,18 @@ async def on_message(msg):
             if not hasAnswered and time >= 25:
                 embed = discord.Embed(title="⏰ Out of time!", description=f"Sorry! The correct answer was {correct_ans}", color=0xFC1F4E)
             elif possible_ans[ans] == correct_ans:
+                add_if_new_user(user)
+                query = ("UPDATE stats SET correct = correct + 1 WHERE username=?")
+                cursorObj.execute(query, (str(user),))
+                con.commit()
                 embed = discord.Embed(title="✅ Correct!", description=f"Good job {username}!", color=0x68FF38)
             else:
+                add_if_new_user(user)
+                query = ("UPDATE stats SET incorrect = incorrect + 1 WHERE username=?")
+                cursorObj.execute(query, (str(user),))
+                con.commit()
                 embed = discord.Embed(title="❌ Incorrect!", description=f"Sorry {username}! The correct answer was {correct_ans}", color=0xFC1F4E)       
             await msg.channel.send(embed=embed)
     
 client.run(TOKEN)
+con.close()
