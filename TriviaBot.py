@@ -133,23 +133,23 @@ async def on_message(msg):
                 await asyncio.sleep(1)
                 time += 1
 
-            user = set()
+            users = []
 
             for react in m.reactions:
                 async for u in react.users():
-                    user.add(u.mention)
+                    if u.id != 843268722658377758:
+                        users.append(u)
 
-            user = list(user)[1]
-
-            print(user)
+            username = users[0].name
+            user = await client.fetch_user(users[0].id)
 
             # respond
             if not hasAnswered and time >= 25:
                 embed = discord.Embed(title="⏰ Out of time!", description=f"Sorry! The correct answer was {correct_ans}", color=0xFC1F4E)
             elif possible_ans[ans] == correct_ans:
-                embed = discord.Embed(title="✅ Correct!", description="Good job!", color=0x68FF38)
+                embed = discord.Embed(title="✅ Correct!", description=f"Good job {username}!", color=0x68FF38)
             else:
-                embed = discord.Embed(title="❌ Incorrect!", description=f"Sorry! The correct answer was {correct_ans}", color=0xFC1F4E)       
+                embed = discord.Embed(title="❌ Incorrect!", description=f"Sorry {username}! The correct answer was {correct_ans}", color=0xFC1F4E)       
             await msg.channel.send(embed=embed)
     
 client.run(TOKEN)
