@@ -41,7 +41,7 @@ async def on_message(msg):
             embed = discord.Embed(title='Help', color=0x1FB3FC)
             embed.add_field(name='Welcome to TriviaBot!', value='To play, type `?triv` in chat!', inline=False)#, value="""How to use:\n• To play: type ```?triv``` in chat\n• OPTIONAL: You can also specify a subject ID by doing ```?triv <subject id>```\n• OPTIONAL: You can also specify difficulty using one of the three keywords, i.e ```?triv hard```\n• OPTIONAL: Finally, you can combine both these in any order, i.e ```?triv 10 hard``` or ```?triv hard 10```\n• To respond: TriviaBot will automatically react with the possible options, click on the option you think is correct!\n\nSubject IDs:\n1) General Knowledge\n2) Entertainment: Books\n3) Entertainment: Film\n4) Entertainment: Music\n5) Entertainment: Musicals & Theatres\n6) Entertainment: Television\n7) Entertainment: Video Games\n8) Entertainment: Board Games\n9) Science & Nature\n10) Science: Computers\n11) Science: Mathematics\n12) Mythology\n13) Sports\n14) Geography\n15) History\n16) Politics\n17) Art\n18) Celebrities\n19) Animals\n20) Vehicles\n21) Entertainment: Comics\n22) Science: Gadgets\n23) Entertainment: Japanese Anime & Manga\n24) Entertainment: Cartoon & Animations\n\nDifficulties:\n• Easy\n• Medium\n• Hard""")
             embed.add_field(name='Optional choices', value='• To specify a subject, type `?triv <subject id>` in chat!\n• To specify a difficulty, type `?triv <difficulty>` in chat!\n\n*Note: These two optional statements can be combined in any order, e.g.*\n`?triv hard 10`\n*or*\n`?triv 10 hard`', inline=False)
-            embed.add_field(name='Stats', value='To see your stats, type `?stats` in chat!\nYou can also mention a user like `?stats @<user>` to see their stats!', inline=False)
+            embed.add_field(name='Stats', value='To see your stats, type `?stats` in chat!\nYou can also mention a user like `?stats @<user>` to see their stats!\n\n*Note: Allowing a question to time out will count against your score!*\n\n', inline=False)
             subject_str = ''
             for x in range(len(subjects)):
                 subject_str += str(x+1) + ') ' + list(subjects)[x] + '\n'
@@ -171,9 +171,15 @@ async def on_message(msg):
             if len(users) > 0:
                 username = users[0].name
                 user = await client.fetch_user(users[0].id)
+            else:
+                user = msg.author
 
             # respond
             if not hasAnswered and time >= 25:
+                add_if_new_user(user)
+                query = ("UPDATE stats SET incorrect = incorrect + 1 WHERE username=?")
+                cursorObj.execute(query, (str(user),))
+                con.commit()
                 embed = discord.Embed(title="⏰ Out of time!", description=f"Sorry! The correct answer was {correct_ans}", color=0xFC1F4E)
             elif possible_ans[ans] == correct_ans:
                 add_if_new_user(user)
