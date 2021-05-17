@@ -4,6 +4,30 @@
 # TriviaBot! alllows you and your friends to play trivia in your chat!
 #
 # Run with `python3 TriviaBot.py`
+#
+# FEATURES:
+#   - stats tracker:
+#       • the built in stats tracker allows you and your friends
+#         to see how well you do in trivia, keeping track of total 
+#         questions answered and your overall score
+#   - general trivia
+#       • get a completely random question taken from one of the
+#         26 categories and 3 difficulties which you then have
+#         30 seconds to answer the question
+#   - advanced trivia
+#       • specify a specific category or a specific difficulty (or both)
+#         and test your knowledge  
+#
+# FEATURES @TODO:
+#   - `group` mode:
+#       • group mode would allow any user to vote on an answer
+#         then after the allotted time expires the bot reveals
+#         the correct answer and the players who were correct
+#   - `team` mode:
+#       • team mode allows a player to set up two teams of 
+#         n players who then compete to answer a set of questions
+#         first, whichever team ends with the most points win the 
+#         game
 
 import asyncio, html, json, os, random, discord, requests, sqlite3, sys
 from sqlite3 import Error
