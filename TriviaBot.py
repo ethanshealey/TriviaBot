@@ -131,15 +131,19 @@ This function determines if the user who answered
 is in the database, adds them if they do not exist
 '''
 def add_if_new_user(user):
+    # select the user from the database
     query = ("SELECT * FROM stats WHERE username=?")
     data = [i for i in cursorObj.execute(query, (str(user),))]
+    # if returns empty list, player does not exist
     if data == []:
         # insert new player into database
         query = ("INSERT INTO stats (username) values (?)")
         cursorObj.execute(query, (str(user),))
         con.commit()
+        # log new user being added
         print('added user', user, 'to db')
     else:
+        # log player requesting to play
         print('user', user, 'is requesting a question')
 
 '''
@@ -153,11 +157,15 @@ correct - Boolean value showing if the user was correct
 This function updates the users score in the database
 '''
 def update_score(user, correct):
+    # check if user is new
     add_if_new_user(user)
+    # if user was correct, update correct value
     if correct:
         query = ("UPDATE stats SET correct = correct + 1 WHERE username=?")
+    # if user was incorrect, update incorrect value
     else:
         query = ("UPDATE stats SET incorrect = incorrect + 1 WHERE username=?")
+    # execute and commit
     cursorObj.execute(query, (str(user),))
     con.commit()
 
@@ -187,13 +195,20 @@ This function handles all other possibilities:
 '''
 @client.event
 async def on_message(msg):
+
+    # dont let bot respond to itself
     if msg.author == client.user:
         return
 
+    # save message from user 
     content = msg.content
+    # if user is using TriviaBot! prefix
     if content.startswith('?'):
+
+        # split the content by spaces
         content = content.split(' ')
 
+        # get the subjects and subject codes
         subjects, subject_codes = get_subjects_and_codes()
 
         '''
@@ -207,7 +222,7 @@ async def on_message(msg):
             return 
 
         '''
-        Help 
+        ?help | ?triv help 
 
         Send help prompt to user
         '''
@@ -226,7 +241,7 @@ async def on_message(msg):
             await msg.channel.send(embed=embed)
 
         '''
-        Stats
+        ?stats | ?stat | ?stats <@ user> | ?stat <@ user>
 
         Send stats report to player, optinally show stats of mentioned user
         '''
@@ -249,7 +264,7 @@ async def on_message(msg):
             await msg.channel.send(embed=embed)
 
         '''
-        Triv
+        ?triv | ?triv <subject id> | ?triv <difficulty> | ?triv <subject id> <difficulty> | ?triv <difficulty> <subject id>
 
         Generate a random question and send to user, once user reacts to 
         question check if user is correct. If no response in 30 seconds
@@ -258,14 +273,17 @@ async def on_message(msg):
         Optional arguments include <subject id> and <difficulty>
         '''
         elif len(content) >= 1 and content[0].lower() == '?triv':
+
             # get data                    
             url = get_url(content, subject_codes)
 
+            # if user gave invalid subject ID
             if not url:
                 embed = discord.Embed(title='Invalid subject given', description='A list of subjects can be found by typing `?help` or `?triv help` in chat!')
                 await msg.channel.send(embed=embed)
                 return
 
+            # get the data from the API
             data = json.loads(urlopen(url).read().decode("utf-8"))
 
             #parse data
@@ -281,7 +299,7 @@ async def on_message(msg):
             else:
                 possible_ans = ['True', 'False']
             
-            # shuffle ans
+            # shuffle possible answers if not a T/F question
             if not type == 'boolean':
                 random.shuffle(possible_ans)
 
@@ -297,21 +315,28 @@ async def on_message(msg):
             # send embeded message
             m = await msg.channel.send(embed=embed)
 
+            # set up emojis
             if not type == 'boolean':
                 emotes = {'🇦': possible_ans[0], '🇧': possible_ans[1], '🇨': possible_ans[2], '🇩': possible_ans[3]}
             else:
                 emotes = {'🇹': possible_ans[0], '🇫':possible_ans[1]}
 
+            # react to post with selected emojis
             for emote in emotes:
                 await m.add_reaction(emote)
 
             # wait for a response
             hasAnswered, ans = False, None
             time = 0
+
+            # wait for a user to respond, if no response in 30 seconds
+            # time out the problem
             while not hasAnswered and time <= 30:
                 
+                # get the bots message
                 m = await msg.channel.fetch_message(m.id)
 
+                # Check to see if any reactions have a new reaction
                 if not type == 'boolean':
                     A = get(m.reactions, emoji=list(emotes)[0])
                     B = get(m.reactions, emoji=list(emotes)[1])
@@ -328,6 +353,7 @@ async def on_message(msg):
                     elif D and D.count > 1:
                         hasAnswered, ans = True, 3
 
+                # if question is T/F
                 else:
                     T = get(m.reactions, emoji=list(emotes)[0])
                     F = get(m.reactions, emoji=list(emotes)[1])
@@ -337,12 +363,14 @@ async def on_message(msg):
                     elif F and F.count > 1:
                         hasAnswered, ans = True, 1
 
+                # sleep for 1 second before checking again
                 await asyncio.sleep(1)
                 time += 1
 
+            # get the user who answered
             user, username = await get_user(m, msg)
 
-            # respond
+            # respond to the user
             if not hasAnswered and time >= 30:
                 update_score(user, 0)
                 embed = discord.Embed(title="⏰ Out of time!", description=f"Sorry! The correct answer was {correct_ans}", color=0xFC1F4E)
