@@ -139,9 +139,9 @@ async def on_message(msg):
                 async for u in react.users():
                     if u.id != 843268722658377758:
                         users.append(u)
-
-            username = users[0].name
-            user = await client.fetch_user(users[0].id)
+            if len(users) > 0:
+                username = users[0].name
+                user = await client.fetch_user(users[0].id)
 
             # respond
             if not hasAnswered and time >= 25:
