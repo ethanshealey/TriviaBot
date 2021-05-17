@@ -26,7 +26,10 @@ async def on_message(msg):
         if len(content) == 1 and content[0] == '?help':
             # help prompt
             embed = discord.Embed(title='Help', color=0x1FB3FC)
-            embed.add_field(name='Welcome to TriviaBot!', value='How to use:\n• To play: type `?triv` in chat\n• OPTIONAL: You can also specify a subject ID by doing `?triv <subject id>`\n• OPTIONAL: You can also specify difficulty using one of the three keywords, i.e `?triv hard`\n• OPTIONAL: Finally, you can combine both these in any order, i.e `?triv 10 hard` or `?triv hard 10`\n• To respond: TriviaBot will automatically react with the possible options, click on the option you think is correct!\n\nSubject IDs:\n1) General Knowledge\n2) Entertainment: Books\n3) Entertainment: Film\n4) Entertainment: Music\n5) Entertainment: Musicals & Theatres\n6) Entertainment: Television\n7) Entertainment: Video Games\n8) Entertainment: Board Games\n9) Science & Nature\n10) Science: Computers\n11) Science: Mathematics\n12) Mythology\n13) Sports\n14) Geography\n15) History\n16) Politics\n17) Art\n18) Celebrities\n19) Animals\n20) Vehicles\n21) Entertainment: Comics\n22) Science: Gadgets\n23) Entertainment: Japanese Anime & Manga\n24) Entertainment: Cartoon & Animations\n\nDifficulties:\n• Easy\n• Medium\n• Hard', inline=False)
+            embed.add_field(name='Welcome to TriviaBot!', value='To play, type `?triv` in chat!', inline=False)#, value="""How to use:\n• To play: type ```?triv``` in chat\n• OPTIONAL: You can also specify a subject ID by doing ```?triv <subject id>```\n• OPTIONAL: You can also specify difficulty using one of the three keywords, i.e ```?triv hard```\n• OPTIONAL: Finally, you can combine both these in any order, i.e ```?triv 10 hard``` or ```?triv hard 10```\n• To respond: TriviaBot will automatically react with the possible options, click on the option you think is correct!\n\nSubject IDs:\n1) General Knowledge\n2) Entertainment: Books\n3) Entertainment: Film\n4) Entertainment: Music\n5) Entertainment: Musicals & Theatres\n6) Entertainment: Television\n7) Entertainment: Video Games\n8) Entertainment: Board Games\n9) Science & Nature\n10) Science: Computers\n11) Science: Mathematics\n12) Mythology\n13) Sports\n14) Geography\n15) History\n16) Politics\n17) Art\n18) Celebrities\n19) Animals\n20) Vehicles\n21) Entertainment: Comics\n22) Science: Gadgets\n23) Entertainment: Japanese Anime & Manga\n24) Entertainment: Cartoon & Animations\n\nDifficulties:\n• Easy\n• Medium\n• Hard""")
+            embed.add_field(name='Optional choices', value='• To specify a subject, type `?triv <subject id>` in chat!\n• To specify a difficulty, type `?triv <difficulty>` in chat!\n\nNote: These two optional statements can be combined in any order, e.g.\n`?triv hard 10`\nor\n`?triv 10 hard`', inline=False)
+            embed.add_field(name='Subjects', value='1) General Knowledge\n2) Entertainment: Books\n3) Entertainment: Film\n4) Entertainment: Music\n5) Entertainment: Musicals & Theatres\n6) Entertainment: Television\n7) Entertainment: Video Games\n8) Entertainment: Board Games\n9) Science & Nature\n10) Science: Computers\n11) Science: Mathematics\n12) Mythology\n13) Sports\n14) Geography\n15) History\n16) Politics\n17) Art\n18) Celebrities\n19) Animals\n20) Vehicles\n21) Entertainment: Comics\n22) Science: Gadgets\n23) Entertainment: Japanese Anime & Manga\n24) Entertainment: Cartoon & Animations')
+            embed.add_field(name='Difficulties', value='• Easy\n• Medium\n• Hard')
             await msg.channel.send(embed=embed)
 
         elif len(content) >= 1 and content[0] == '?triv':
@@ -36,8 +39,8 @@ async def on_message(msg):
             if len(content) == 2:
                 if content[1].isdigit():
                     url += '&category=' + str(int(content[1]) + 8)
-                if content[1] == 'easy' or content[1] == 'medium' or content[1] == 'hard':
-                    url += '&difficulty=' + content[1]
+                if content[1].lower() == 'easy' or content[1].lower() == 'medium' or content[1].lower() == 'hard':
+                    url += '&difficulty=' + content[1].lower()
 
             elif len(content) == 3:
                 if content[1].isdigit():
@@ -45,9 +48,9 @@ async def on_message(msg):
                 elif content[2].isdigit():
                     url += '&category=' + str(int(content[2]) + 8)
 
-                if content[1] == 'easy' or content[1] == 'medium' or content[1] == 'hard':
+                if content[1].lower() == 'easy' or content[1].lower() == 'medium' or content[1].lower() == 'hard':
                     url += '&difficulty=' + content[1]
-                elif content[2] == 'easy' or content[2] == 'medium' or content[2] == 'hard':
+                elif content[2].lower() == 'easy' or content[2].lower() == 'medium' or content[2].lower() == 'hard':
                     url += '&difficulty=' + content[2]
 
             data = json.loads(urlopen(url).read().decode("utf-8"))
