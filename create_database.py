@@ -10,7 +10,7 @@ def sql_table():
 
     cursorObj = con.cursor()
     #Creates the page_content table
-    cursorObj.execute("CREATE TABLE stats(id integer PRIMARY KEY autoincrement, username text, correct integer default 0, incorrect integer default 0)")
+    cursorObj.execute("CREATE TABLE stats(id integer PRIMARY KEY autoincrement, username text, correct integer default 0, incorrect integer default 0, guild integer NOT NULL)")
     
     #Check to see fi the table was created
     cursorObj.execute(''' SELECT count(name) FROM sqlite_master WHERE type='table' AND name='stats' ''')

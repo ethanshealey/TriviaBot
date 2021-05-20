@@ -154,15 +154,15 @@ user - The user who answered the question
 This function determines if the user who answered
 is in the database, adds them if they do not exist
 '''
-def add_if_new_user(user):
+def add_if_new_user(user, guild):
     # select the user from the database
-    query = ("SELECT * FROM stats WHERE username=?")
-    data = [i for i in cursorObj.execute(query, (str(user),))]
+    query = ("SELECT * FROM stats WHERE username=? and guild=?")
+    data = [i for i in cursorObj.execute(query, (str(user),str(guild),))]
     # if returns empty list, player does not exist
     if data == []:
         # insert new player into database
-        query = ("INSERT INTO stats (username) values (?)")
-        cursorObj.execute(query, (str(user),))
+        query = ("INSERT INTO stats (username, guild) values (?, ?)")
+        cursorObj.execute(query, (str(user),str(guild),))
         con.commit()
         # log new user being added
         print('added user', user, 'to db')
@@ -180,17 +180,17 @@ correct - Boolean value showing if the user was correct
 
 This function updates the users score in the database
 '''
-def update_score(user, correct):
+def update_score(user, guild, correct):
     # check if user is new
-    add_if_new_user(user)
+    add_if_new_user(user, guild)
     # if user was correct, update correct value
     if correct:
-        query = ("UPDATE stats SET correct = correct + 1 WHERE username=?")
+        query = ("UPDATE stats SET correct = correct + 1 WHERE username=? AND guild=?")
     # if user was incorrect, update incorrect value
     else:
-        query = ("UPDATE stats SET incorrect = incorrect + 1 WHERE username=?")
+        query = ("UPDATE stats SET incorrect = incorrect + 1 WHERE username=? AND guild=?")
     # execute and commit
-    cursorObj.execute(query, (str(user),))
+    cursorObj.execute(query, (str(user),str(guild),))
     con.commit()
 
 '''
@@ -274,8 +274,8 @@ async def on_message(msg):
                 user = msg.mentions[0]
             else:
                 user = msg.author
-            query = ("SELECT * FROM stats WHERE username=?")
-            data = [i for i in cursorObj.execute(query, (str(user),))]
+            query = ("SELECT * FROM stats WHERE username=? AND guild=?")
+            data = [i for i in cursorObj.execute(query, (str(user),str(msg.guild.id),))]
             if len(data) >= 1:
                 data=data[0]
                 embed = discord.Embed(title='Stats for ' + str(data[1]), color=0x1FB3FC)
@@ -396,13 +396,13 @@ async def on_message(msg):
 
             # respond to the user
             if not hasAnswered and time >= 30:
-                update_score(user, 0)
+                update_score(user, m.guild.id, 0)
                 embed = discord.Embed(title="⏰ Out of time!", description=f"Sorry! The correct answer was {correct_ans}", color=0xFC1F4E)
             elif possible_ans[ans] == correct_ans:
-                update_score(user, 1)
+                update_score(user, m.guild.id, 1)
                 embed = discord.Embed(title="✅ Correct!", description=f"Good job {username}!", color=0x68FF38)
             else:
-                update_score(user, 0)
+                update_score(user, m.guild.id, 0)
                 embed = discord.Embed(title="❌ Incorrect!", description=f"Sorry {username}! The correct answer was {correct_ans}", color=0xFC1F4E)       
             await msg.channel.send(embed=embed)
     
