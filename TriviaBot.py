@@ -261,7 +261,7 @@ async def on_message(msg):
                 subject_str += str(x+1) + ') ' + list(subjects)[x] + '\n'
             embed.add_field(name='Subjects', value=subject_str)
             embed.add_field(name='Difficulties', value='• Easy\n• Medium\n• Hard')
-            embed.set_footer(text='Create by Ethan Shealey | https://github.com/ethanshealey/TriviaBot\nQuestions from opentdb.com | https://opentdb.com')
+            embed.set_footer(text='Created by Ethan Shealey | https://github.com/ethanshealey/TriviaBot\nQuestions from opentdb.com | https://opentdb.com')
             await msg.channel.send(embed=embed)
 
         '''
@@ -269,7 +269,7 @@ async def on_message(msg):
 
         Send stats report to player, optinally show stats of mentioned user
         '''
-        elif len(content) <= 2 and (content[0].lower() == '?stats' or content[0].lower() == '?stat'):
+        if len(content) <= 2 and (content[0].lower() == '?stats' or content[0].lower() == '?stat'):
             if len(content) == 2:
                 user = msg.mentions[0]
             else:
@@ -296,7 +296,7 @@ async def on_message(msg):
 
         Optional arguments include <subject id> and <difficulty>
         '''
-        elif len(content) >= 1 and content[0].lower() == '?triv':
+        if len(content) >= 1 and content[0].lower() == '?triv':
 
             # get data                    
             url = get_url(content, subject_codes)
